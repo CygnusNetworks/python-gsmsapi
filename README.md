@@ -12,6 +12,7 @@ Currently supported providers:
 
 ```python
 import gsmsapi.sipgate_api
+import gsmsapi.smstrade_api
 
 username = "foo"
 password = "bar
