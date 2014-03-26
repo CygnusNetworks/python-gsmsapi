@@ -1,3 +1,4 @@
 .idea
 *.pyc
 test_*.py
+atlassian-ide-plugin.xml
