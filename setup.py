@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from setuptools import setup
+
 setup(name='gsmsapi',
 	version='0.10',
 	description='SMS API for (german) SMS providers',
