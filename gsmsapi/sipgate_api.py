@@ -6,6 +6,7 @@ http://www.sipgate.de/img/sipgate_api_documentation.pdf
 Implemented SIPGate API Version 1.06 21. August 2007
 """
 
+import decimal
 import xmlrpclib
 
 VERSION = 0.10
@@ -111,7 +112,7 @@ class SipgateAPI(object):
 
 	def get_balance(self):
 		result = self.__rpc_call(self.rpc.samurai.BalanceGet)
-		return result
+		return decimal.Decimal(result["CurrentBalance"]["TotalIncludingVat"])
 
 	def sendsms(self, phone, message, sender=None):
 		if sender is not None:
