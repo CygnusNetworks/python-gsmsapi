@@ -114,7 +114,7 @@ class SipgateAPI(object):
 		result = self.__rpc_call(self.rpc.samurai.BalanceGet)
 		return decimal.Decimal(result["CurrentBalance"]["TotalIncludingVat"])
 
-	def sendsms(self, phone, message, sender=None):
+	def send_sms(self, phone, message, sender=None):
 		if sender is not None:
 			self.__rpc_call(self.rpc.samurai.SessionInitiate, dict(RemoteUri="sip:%s@sipgate.net" % phone, TOS="text", Content=message, LocalURI=sender))
 		else:

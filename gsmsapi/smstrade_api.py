@@ -384,7 +384,7 @@ class SMSTradeAPI(object):
 			raise SMSTradeError(
 				u"message type %s is unknown" % self.messagetype)
 
-	def sendsms(self, to, text):
+	def send_sms(self, to, text):
 		"""
 		Send an SMS to recipients in the to parameter.
 
