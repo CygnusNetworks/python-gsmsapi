@@ -9,8 +9,6 @@ from locale import getpreferredencoding
 import decimal
 import requests
 
-import cygnuslog.syslogging
-
 #: characters allowed in GSM 03.38
 GSM0338_CHARS = (
 	u'@£$¥èéùìòÇ\nØø\rÅå'
@@ -127,7 +125,6 @@ class SMSTradeAPI(object):
 		:param str body:
 			response body
 		"""
-		#log.info("response body:\n%s", body)
 		lines = body.splitlines()
 		try:
 			retval = {
