@@ -115,6 +115,9 @@ class SipgateAPI(object):
 		return decimal.Decimal(result["CurrentBalance"]["TotalIncludingVat"])
 
 	def send_sms(self, phone, message, sender=None):
+		# Sipgate does not allow to send sms by using + sign in front
+		if phone.startswith("+"):
+			phone = phone[1:]
 		if sender is not None:
 			self.__rpc_call(self.rpc.samurai.SessionInitiate, dict(RemoteUri="sip:%s@sipgate.net" % phone, TOS="text", Content=message, LocalURI=sender))
 		else:
