@@ -2,4 +2,4 @@ python-gsmsapi (0.10) wheezy; urgency=low
 
   * Initial release
 
- -- Dr. Torge Szczepanek <info@cygnusnetworks.de>  Wed, 26 Mar 2014 21:58:07 +0100
+ -- Dr. Torge Szczepanek <debian@cygnusnetworks.de>  Wed, 26 Mar 2014 21:58:07 +0100
