@@ -12,5 +12,7 @@ setup(name='gsmsapi',
 	maintainer_email='debian@cygnusnetworks.de',
 	license='MIT',
 	packages=['gsmsapi'],
-	#test_suite='discover_tests',
+	url = 'https://github.com/CygnusNetworks/python-gsmsapi',
+	download_url = 'https://github.com/CygnusNetworks/python-gsmsapi/tarball/v0.10',
+	keywords = ["sms", "german", "sipgate", "smstrade", "api"],
 )
