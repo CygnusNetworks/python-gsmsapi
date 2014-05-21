@@ -22,5 +22,6 @@ setup(name='gsmsapi',
 		'License :: OSI Approved :: MIT License',
 		'Operating System :: OS Independent',
 		'Programming Language :: Python',
-		'Topic :: Software Development :: Libraries :: Python Modules']  # see: https://pypi.python.org/pypi?%3Aaction=list_classifiers
+		'Topic :: Software Development :: Libraries :: Python Modules'],  # see: https://pypi.python.org/pypi?%3Aaction=list_classifiers
+	install_requires=["requests"],
 )
