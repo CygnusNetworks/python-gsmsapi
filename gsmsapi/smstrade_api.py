@@ -130,6 +130,8 @@ class SMSTradeAPI(object):
 			retval = {
 				'status': int(lines[0]),
 			}
+			# FIXME: analyze status code and give a meaningful error message back
+			# see: http://www.smstrade.de/pdf/SMS-Gateway_HTTP_API_v2_de.pdf
 			if self.message_id:
 				retval['message_id'] = lines[1]
 			if self.cost:
