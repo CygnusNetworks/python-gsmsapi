@@ -94,13 +94,13 @@ class SipgateAPI(object):
 		url = baseurl % dict(username=username, password=password)
 		self.rpc = xmlrpclib.Server(url)
 
-	def __rpc_call(self, function, dict=None, init=False):
+	def __rpc_call(self, function, d=None, init=False):
 		if self.identified is False and init is False:
 			self.client_identify()
 			self.identified = True
 		try:
-			if dict is not None:
-				result = SipgateAPIResponse(function(dict))
+			if d is not None:
+				result = SipgateAPIResponse(function(d))
 			else:
 				result = SipgateAPIResponse(function())
 		except xmlrpclib.Error, exc:
@@ -108,7 +108,7 @@ class SipgateAPI(object):
 		return result
 
 	def client_identify(self):
-		result = self.__rpc_call(self.rpc.samurai.ClientIdentify, dict(ClientName=self.identify_client_name, ClientVersion=VERSION, ClientVendor=VENDOR), init=True)
+		self.__rpc_call(self.rpc.samurai.ClientIdentify, dict(ClientName=self.identify_client_name, ClientVersion=VERSION, ClientVendor=VENDOR), init=True)
 
 	def get_balance(self):
 		result = self.__rpc_call(self.rpc.samurai.BalanceGet)

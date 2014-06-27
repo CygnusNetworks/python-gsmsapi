@@ -10,16 +10,7 @@ import decimal
 import requests
 
 #: characters allowed in GSM 03.38
-GSM0338_CHARS = (
-	u'@£$¥èéùìòÇ\nØø\rÅå'
-	u'Δ_ΦΓΛΩΠΨΣΘΞ' + unichr(27) + u'ÆæÉ'
-								  u' !"#¤%&\'()*+,-./'
-								  u'0123456789:;<=>?'
-								  u'¡ABCDEFGHIJKLMNO'
-								  u'PQRSTUVWXYZÄÖÑÜ§'
-								  u'abcdefghijklmno'
-								  u'pqrstuvwxyzäöñüà'
-)
+GSM0338_CHARS = (u'@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæÉ !"#¤%&\'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§abcdefghijklmnopqrstuvwxyzäöñüà' + unichr(27))
 
 #: characters allowed in GSM 03.38 that occupy two octets
 GSM0338_TWO_OCTET_CHARS = u'€' + unichr(12) + ur'[\]^{|}~'
@@ -77,14 +68,14 @@ class SMSTradeError(Exception):
 		return self.message.encode(getpreferredencoding())
 
 
-class SMSTradeAPI(object):
+class SMSTradeAPI(object):  # pylint:disable=R0902
 	"""
 	Abstraction of the `smstrade.eu <http://smstrade.eu>`_ http(s) mail sending
 	API.
 
 	"""
 
-	def __init__(self, key, sender, route="basic", debug=False, reports=False, concat=False, charset='ascii', response=False):
+	def __init__(self, key, sender, route="basic", debug=False, reports=False, concat=False, charset='ascii', response=False):  # pylint: disable=R0913
 		"""
 		Initialize a new SMSTradeAPI instance.
 
@@ -125,21 +116,42 @@ class SMSTradeAPI(object):
 		:param str body:
 			response body
 		"""
+		retval = {}
 		lines = body.splitlines()
+		if len(lines) < 1:
+			raise SMSTradeError('malformed response - did not find status line')
 		try:
-			retval = {
-				'status': int(lines[0]),
-			}
-			# FIXME: analyze status code and give a meaningful error message back
-			# see: http://www.smstrade.de/pdf/SMS-Gateway_HTTP_API_v2_de.pdf
+			status = int(lines[0])
+		except Exception:
+			raise SMSTradeError('Invalid response found with not status code: %s' % repr(body))
+		if status == STATUS_OK:
+			retval['status'] = status
+			if len(lines) < 4:
+				raise SMSTradeError('malformed response - did not find lines containing message data - found %i lines in body %s' % (len(lines), body))
 			if self.message_id:
 				retval['message_id'] = lines[1]
 			if self.cost:
 				retval['cost'] = decimal.Decimal(lines[2])
 			if self.count:
 				retval['count'] = int(lines[3])
-		except IndexError:
-			raise SMSTradeError('malformed response')
+		elif status == STATUS_INVALID_RECEIVER_NUMBER:
+			raise SMSTradeError('Invalid receiver number')
+		elif status == STATUS_INVALID_MESSAGE_TEXT:
+			raise SMSTradeError('Invalid message text')
+		elif status == STATUS_INVALID_SMS_ROUTE:
+			raise SMSTradeError('Invalid SMS route')
+		elif status == STATUS_IDENTIFICATION_FAILED:
+			raise SMSTradeError('Identification failed')
+		elif status == STATUS_NOT_ENOUGH_BALANCE:
+			raise SMSTradeError('Not enough balance')
+		elif status == STATUS_NETWORK_NOT_SUPPORTED_BY_ROUTE:
+			raise SMSTradeError('Network not supported by route')
+		elif status == STATUS_FEATURE_NOT_POSSIBLE_FOR_ROUTE:
+			raise SMSTradeError('Status feature not possible for route')
+		elif status == STATUS_SMSC_HANDOVER_FAILED:
+			raise SMSTradeError('Status SMSC handover failed')
+		else:
+			raise SMSTradeError('Unknown status %s encountered' % repr(status))
 		return retval
 
 	def _add_optional_flags(self, request_params):
@@ -175,11 +187,7 @@ class SMSTradeAPI(object):
 			recipient calling number
 
 		"""
-		request_params = {
-			'key': self.key,
-			'to': recipient,
-			'route': self.route,
-		}
+		request_params = {'key': self.key, 'to': recipient, 'route': self.route}
 		if self.route in (ROUTE_GOLD, ROUTE_DIRECT):
 			request_params['from'] = self.sender.encode(self.charset)
 		if self.charset != 'ascii':
@@ -203,7 +211,7 @@ class SMSTradeAPI(object):
 		request_params['message'] = text.encode(self.charset)
 		if self.concat:
 			request_params['concat'] = 1
-		print "DEBUG data is", request_params
+		#print ("DEBUG data is", request_params)
 		response = requests.post(self.url, data=request_params)
 		response.raise_for_status()
 		return self._handle_response_body(response.text)
@@ -272,8 +280,7 @@ class SMSTradeAPI(object):
 			SMS message text
 
 		"""
-		if ((self.messagetype is None) or
-				(self.messagetype == MESSAGE_TYPE_FLASH)):
+		if (self.messagetype is None) or (self.messagetype == MESSAGE_TYPE_FLASH):
 			return self._send_normal_message(recipient, text)
 		elif self.messagetype == MESSAGE_TYPE_UNICODE:
 			return self._send_unicode_message(recipient, text)
@@ -282,8 +289,7 @@ class SMSTradeAPI(object):
 		elif self.messagetype == MESSAGE_TYPE_VOICE:
 			return self._send_voice_message(recipient, text)
 		else:
-			raise SMSTradeError(u"unknown message type %s" %
-								self.messagetype)
+			raise SMSTradeError(u"unknown message type %s" % self.messagetype)
 
 	@staticmethod
 	def _gsm0338_length(text):
@@ -294,8 +300,7 @@ class SMSTradeAPI(object):
 			elif char in GSM0338_TWO_OCTET_CHARS:
 				charcount += 2
 			else:
-				raise SMSTradeError(
-					u"character %s is not allowed in GSM messages." % char)
+				raise SMSTradeError(u"character %s is not allowed in GSM messages." % char)
 		return charcount
 
 	def _check_normal_message(self, text):
@@ -307,8 +312,7 @@ class SMSTradeAPI(object):
 
 		"""
 		charcount = self._gsm0338_length(text)
-		if ((self.concat and charcount > 1530) or
-				(not self.concat and charcount > 160)):
+		if (self.concat and charcount > 1530) or (not self.concat and charcount > 160):
 			message = "too many characters in message"
 			if not self.concat and charcount <= 1530:
 				message += ", you may try to use concat"
@@ -316,9 +320,7 @@ class SMSTradeAPI(object):
 		try:
 			text.encode(self.charset)
 		except ValueError:
-			raise SMSTradeError((
-									"The message can not be encoded with the chosen character set"
-									" %s") % self.charset)
+			raise SMSTradeError("The message can not be encoded with the chosen character set %s" % self.charset)
 
 	@staticmethod
 	def _check_unicode_message(text):
@@ -332,12 +334,9 @@ class SMSTradeAPI(object):
 		for char in text:
 			code = ord(char)
 			if (0xd800 <= code <= 0xdfff) or (code > 0xffff):
-				raise SMSTradeError(
-					u"the message can not be represented in UCS2")
+				raise SMSTradeError(u"the message can not be represented in UCS2")
 		if len(text) > 70:
-			raise SMSTradeError(
-				u"too many characters in message, unicode SMS may contain up"
-				u" to 70 characters")
+			raise SMSTradeError(u"too many characters in message, unicode SMS may contain up to 70 characters")
 
 	@staticmethod
 	def _check_binary_message(text):
@@ -351,9 +350,7 @@ class SMSTradeAPI(object):
 		try:
 			length = len(text.lower().decode('hex'))
 			if length > 140:
-				raise SMSTradeError(
-					u'too many bytes in message, binary messages may contain'
-					u' up to 140 bytes')
+				raise SMSTradeError(u'too many bytes in message, binary messages may contain up to 140 bytes')
 		except:
 			raise SMSTradeError('message cannot be encoded as bytes')
 
@@ -370,8 +367,7 @@ class SMSTradeAPI(object):
 			raise SMSTradeError(u'too many GSM characters in message')
 
 	def _check_message(self, text):
-		if ((self.messagetype is None) or
-				(self.messagetype == MESSAGE_TYPE_FLASH)):
+		if (self.messagetype is None) or (self.messagetype == MESSAGE_TYPE_FLASH):
 			self._check_normal_message(text)
 		elif self.messagetype == MESSAGE_TYPE_UNICODE:
 			self._check_unicode_message(text)
@@ -380,8 +376,7 @@ class SMSTradeAPI(object):
 		elif self.messagetype == MESSAGE_TYPE_VOICE:
 			self._check_voice_message(text)
 		else:
-			raise SMSTradeError(
-				u"message type %s is unknown" % self.messagetype)
+			raise SMSTradeError(u"message type %s is unknown" % self.messagetype)
 
 	def send_sms(self, to, text):
 		"""
@@ -401,7 +396,7 @@ class SMSTradeAPI(object):
 		if not self.messagetype == 'binary':
 			text = text.decode(getpreferredencoding())
 
-		if isinstance(to, str) or isinstance(to, basestring):
+		if isinstance(to, str):
 			to = [to]
 
 		retval = {}
